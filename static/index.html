@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Socket.IO chat</title>
+    <style>
+    .vertically-centered{
+      /* margin: 0;
+      position: absolute;
+      top:50%;
+      -ms-transform:translateY(-50%);
+      transform:translateY(-50%); */
+      /* margin-top: auto;
+      margin-bottom: auto; */
+      display: flex;
+      align-items: center;
+    }
+
+    .bottom-padding{
+      padding-bottom: 20px;
+    }
+
+    .rightMessage{
+      float: right;
+      margin-bottom: 25px;
+      width: 500px;
+      /* background-color: #daf7a6; */
+    }
+
+    .leftMessage{
+      float: left;
+      margin-bottom: 25px;
+      width: 500px;
+      /* background-color: #ff5733; */
+    }
+
+    .my-form{
+      background: rgba(0, 0, 0, 0.15); padding: 0.25rem; position: fixed; bottom: 0; left: 0; right: 0; display: flex; height: 3rem; box-sizing: border-box; backdrop-filter: blur(10px);
+    }
+    </style>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.bundle.min.js" integrity="sha384-b5kHyXgcpbZJO/tY9Ul7kGkf1S0CWuKcCD38l8YkeH8z8QjE0GmW1gYU5S9FOnJ0" crossorigin="anonymous"></script>
+  </head>
+  <body>
+    <div class="container-fluid" >
+      <div class="row" >
+        <div class="col-md-4" style="padding-top: 10px;">
+          <h3 class="text-center">XRP Pay and Chat</h3>
+          <h4 class="text-center" style="padding-top: 30px;">Register Now!</h4>
+          <form class="form-horizontal" style="padding-top: 10px;" >
+            <div style="width :80%; margin-left: 10%; margin-right: 10%; ">
+              <input class="form-control" id="userId" placeholder="Enter Your Name" style="margin-bottom: 10px"></input>
+              <input class="form-control " id="userAddress" placeholder="Enter Address" style="margin-bottom: 10px"></input>
+              <input type="password" class="form-control " id="userSecretKey" placeholder="Enter Secret Key" style="margin-bottom: 10px"></input>
+              <button class="btn btn-dark" onclick="getDetails()" type="button" style="margin-bottom: 10px">Submit</button>
+            </div>
+          </form>
+          <!-- <img src="original.png"> -->
+          <div class="text-center" style="padding-top: 20px;">
+            <h4>Instructions:</h4>
+            <ol style="text-align:left;">
+              <li>Generate your address and secret keys using the XRP Faucet <a href="https://xrpl.org/xrp-testnet-faucet.html">here</a>.</li>
+              <li>Download the <a href="https://play.google.com/store/apps/details?id=com.xrpllabs.xumm&hl=en_US&gl=US">Xumm</a> app & follow instructions to set up a testnet account.</li>
+              <li>Enter your keys into the form above to get started</li>
+              <li>Send a test message or XRP payment to your pal on the other side!</li>
+            </ol>
+          </div>
+        </div>
+        <div class="col-md-8" style="background-color:#ededed;">
+          <div class="card">
+            <div class="card-body" style="display:none;" id="page_id">
+
+            </div>
+          </div>
+          <div style="overflow: scroll;">
+          <ul id="messages" class="list-group"  style = "display: inline-block; height: 592px; overflow-y: scroll;">
+          <!-- <li class="list-group-item list-group-item-primary" style="margin-bottom: 25px; width: 500px; float:left;">This is the first msg</li>
+          <li class="list-group-item list-group-item-primary" style="margin-bottom: 25px; width: 500px; float:right;">Jevlis ka?</li> -->
+          </ul>
+        </div>
+          <div style="position:absolute; bottom:0; display: inline-block; ">
+          <form id="form" action="" style="float: left; width:800px; " class="form-horizontal">
+            <input  class="form-control " id="input" autocomplete="off" />
+            <button class="btn btn-dark " onclick="sendMessage()" type="button" style="margin-top: 10px">Send Message</button>
+            <!-- <button class="btn btn-dark" onclick = "getKey()" type="button">Key</button>
+            <button class="btn btn-dark" onclick = "getInfo()" type="button">Get Info</button> -->
+            <button class="btn btn-dark " onclick = "makePayment()" type="button" style="margin-top: 10px">Pay</button>
+          </form>
+        </div>
+        </div>
+      </div>
+    </div>
+
+
+
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      var socket = io();
+      var id;
+      var form = document.getElementById('form');
+      var input = document.getElementById('input');
+      var username;
+
+      // form.addEventListener('submit', function(e) {
+      //   e.preventDefault();
+      //   if (input.value) {
+      //     socket.emit('sendingAddress', input.value);
+      //     input.value = '';
+      //   }
+      // });
+
+      function getDetails(){
+        var userId = document.getElementById("userId");
+        var userAddress = document.getElementById("userAddress");
+        var userSecretKey = document.getElementById("userSecretKey");
+        username = userId.value;
+        var idblock = document.getElementById("page_id");
+        idblock.innerText = "Welcome, "+userId.value+"! :)"
+        idblock.style="display:block; background-color:#17202b; color:#ffffff;"
+
+        socket.emit('sendingDetails', {"userId": userId.value, "userAddress": userAddress.value, "userSecretKey": userSecretKey.value});
+        userId.value = userAddress.value = userSecretKey.value = "";
+
+      }
+      function sendAddress(){
+        // e.preventDefault();
+        if (input.value) {
+          socket.emit('sendingAddress', input.value);
+          input.value = '';
+        }
+      }
+
+      function getInfo(){
+        socket.emit('getInfo', id);
+      }
+
+      socket.on('sendingID', function setID(receivedid){
+        id = receivedid;
+        console.log("my user id: "+id);
+      });
+
+      function makePayment(){
+        var amount = input.value;
+
+        socket.emit('makePayment', {"amount": amount, "id": id});
+
+        //return trasaction status here
+      }
+
+      function getKey(){
+        socket.emit('sendingKey', {"key":input.value, "id": id});
+      }
+
+      function sendMessage(){
+        var input = document.getElementById("input");
+        socket.emit("newMessage", {"id": id, "msg": input.value});
+        input.value = "";
+
+      }
+
+      // socket.on('getPaymentRes', function(my_obj)) {
+      //   console.log(my_obj)
+      // }
+
+      socket.on("appendMessage", function(obj) {
+        var item = document.createElement('li');
+
+        item.className = "list-group-item list-group-item-primary";
+        item.textContent = obj.username +" : "+obj.msg;
+        document.getElementById("messages").appendChild(item);
+        if(obj.id == id){
+          item.setAttribute("style", "margin-bottom: 25px; width: 500px; float:right; color:#ffffff; background-color:#5a99ee; border-radius:5px;")
+        }
+        else {
+          //append on left;
+          item.setAttribute("style", "margin-bottom: 25px; width: 500px; float:left; color:#ffffff; background-color:#fc6d4c; border-radius:5px; ");
+        }
+         var element = document.getElementById("messages");
+        element.scrollTop = element.scrollHeight;
+      });
+
+      socket.on('paymentNotification', function(display) {
+        var item = document.createElement('li');
+        item.className = "list-group-item list-group-item-primary";
+        item.style="padding-top:10px;"
+        // item.textContent = "You Received Money from "+display.from_user;
+        document.getElementById("messages").appendChild(item);
+        if(display.from_id == id){
+          item.textContent = "You sent "+display.amount+ " XRP to "+display.receiverUser;
+          item.setAttribute("style", "margin-bottom: 25px; width: 500px; float:right; color:#ffffff; background-color:#5a99ee; border-radius:5px;");
+        }
+        else{
+          item.textContent = "You received "+display.amount+" XRP from "+ display.from_user;
+          item.setAttribute("style", "margin-bottom: 25px; width: 500px; float:left; color:#ffffff; background-color:#fc6d4c; border-radius:5px;");
+        }
+        var element = document.getElementById("messages");
+        element.scrollTop = element.scrollHeight;
+      });
+
+
+      socket.on('chat message', function(msg) {
+        var item = document.createElement('li');
+        item.textContent = msg;
+        messages.appendChild(item);
+        window.scrollTo(0, document.body.scrollHeight);
+      });
+    </script>
+  </body>
+
+</html>
